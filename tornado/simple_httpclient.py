@@ -142,6 +142,16 @@ class SimpleAsyncHTTPClient(AsyncHTTPClient):
         self.tcp_client.close()
 
     def fetch_impl(self, request, callback):
+        """https://github.com/tornadoweb/tornado/issues/1753
+
+        The fix would be in simple_httpclient.py;
+        you'd need to capture the start time when the request is
+        created (in SimpleAsyncHTTPClient.fetch_impl) and pass it
+        in to the connection class instead of calling io_loop.time() again
+        when the connection is created.
+        request_timeout should be measured against this start_time
+        while connect_timeout should be measured against the time the connection starts.
+        """
         key = object()
         self.queue.append((key, request, callback))
         if not len(self.active) < self.max_clients:
